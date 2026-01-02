@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget App Corporate - Multi Branch</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <section id="login-page" class="d-flex justify-content-center align-items-center">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary"><i class="fa-solid fa-building"></i> Budget App</h3>
+                <p class="text-muted small">Sistem Approval Anggaran Multi-Cabang</p>
+            </div>
+            
+            <form id="formLogin">
+                <div class="mb-3">
+                    <input type="email" id="email" class="form-control form-control-lg" placeholder="Email Kantor" required>
+                </div>
+                <div class="mb-4">
+                    <input type="password" id="password" class="form-control form-control-lg" placeholder="Password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill mb-2">MASUK APLIKASI</button>
+                <button type="button" onclick="bukaModalRegister()" class="btn btn-outline-secondary w-100 py-2 rounded-pill small">Daftar Akun Baru</button>
+            </form>
+        </div>
+    </section>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-body p-0">
+            
+            <div class="sidebar-profile" onclick="bukaModalProfile()" style="cursor: pointer;" title="Klik untuk Edit Profil">
+                <div class="profile-pic" id="sidebar-avatar">
+                    <i class="fa-solid fa-pen" style="float: right; font-size: 10px; background: white; padding: 4px; border-radius: 50%; border: 1px solid #ddd; color: #333;"></i>
+                </div>
+                <h5 class="fw-bold mb-0 mt-2 text-dark" id="sidebar-name">Memuat...</h5>
+                <small class="text-muted" id="sidebar-role">Klik untuk Edit Profil</small>
+            </div>
+
+            <div class="py-2">
+                <div onclick="gantiTab('pending')" class="sidebar-menu-item active" id="menu-pending">
+                    <div><i class="fa-solid fa-clock text-warning"></i> Menunggu</div>
+                    <span class="badge bg-warning text-dark rounded-pill" id="badge-pending">0</span>
+                </div>
+                
+                <div onclick="gantiTab('approved')" class="sidebar-menu-item" id="menu-approved">
+                    <div><i class="fa-solid fa-check-circle text-success"></i> Disetujui</div>
+                    <span class="badge bg-success rounded-pill" id="badge-approved">0</span>
+                </div>
+
+                <div onclick="gantiTab('rejected')" class="sidebar-menu-item" id="menu-rejected">
+                    <div><i class="fa-solid fa-times-circle text-danger"></i> Ditolak</div>
+                    <span class="badge bg-secondary rounded-pill">Info</span>
+                </div>
+
+                <div onclick="bukaModalCekBudget()" class="sidebar-menu-item" id="menu-cek-budget" style="display:none;">
+                    <div><i class="fa-solid fa-chart-pie text-info"></i> Cek Plafon Budget</div>
+                </div>
+
+                <div style="border-top: 5px solid #f4f7f6; margin: 10px 0;"></div>
+
+                <div onclick="bukaModalMasterCoa()" class="sidebar-menu-item" id="menu-master-coa" style="display:none;">
+                    <div><i class="fa-solid fa-book-journal-whills text-info"></i> Master Akun (COA)</div>
+                    <i class="fa-solid fa-chevron-right text-muted small"></i>
+                </div>
+
+                <div onclick="bukaModalMasterCabang()" class="sidebar-menu-item" id="menu-master-branch" style="display:none;">
+                    <div><i class="fa-solid fa-building text-secondary"></i> Master Cabang</div>
+                    <i class="fa-solid fa-chevron-right text-muted small"></i>
+                </div>
+
+                <div onclick="bukaModalBudget()" class="sidebar-menu-item" id="menu-budget" style="display:none;">
+                    <div><i class="fa-solid fa-wallet text-success"></i> Kelola Budget</div>
+                    <i class="fa-solid fa-chevron-right text-muted small"></i>
+                </div>
+
+                <div onclick="bukaModalManageUsers()" class="sidebar-menu-item" id="menu-admin" style="display:none;">
+                    <div><i class="fa-solid fa-users-gear text-primary"></i> Kelola User</div>
+                    <i class="fa-solid fa-chevron-right text-muted small"></i>
+                </div>
+
+                <div onclick="logout()" class="sidebar-menu-item text-danger mt-2">
+                    <div><i class="fa-solid fa-sign-out-alt"></i> Keluar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="dashboard-page" style="display: none;">
+        
+        <nav class="navbar-custom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn-hamburger" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark" id="header-title">Menunggu</h5>
+                    <small class="text-muted" style="font-size: 11px;" id="header-user">...</small>
+                </div>
+            </div>
+            <i class="fa-regular fa-bell text-muted" style="font-size: 20px;"></i>
+        </nav>
+
+        <div class="container mt-3">
+            <div class="input-group bg-white shadow-sm rounded-pill overflow-hidden border">
+                <span class="input-group-text bg-white border-0 ps-3">
+                    <i class="fa-solid fa-search text-muted"></i>
+                </span>
+                <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Cari judul, kode, atau nama..." onkeyup="lakukanPencarian()">
+            </div>
+        </div>
+
+        <div class="container mt-3">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="stat-card">
+                        <span id="stat-total" class="stat-value text-primary">0</span>
+                        <span class="stat-label">Total Request</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <span class="stat-value text-success" style="font-size: 0.8rem;">Aktif</span>
+                        <span class="stat-label">Status Sistem</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mt-3 pb-5">
+            <div id="content-area">
+                <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
+            </div>
+            <div style="height: 100px;"></div> 
+        </div>
+
+        <button class="fab-btn" onclick="bukaModalRequest()" style="display: none;">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </section>
+
+    <div class="modal fade" id="modalRequest" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Pengajuan Anggaran (Multi-Item)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formRequest">
+                        <div class="mb-3 bg-light p-3 rounded">
+                            <label class="form-label small fw-bold">Judul Pengajuan / Kegiatan</label>
+                            <input type="text" id="inputJudul" class="form-control" placeholder="Contoh: Gathering Divisi IT 2025" required>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header small fw-bold bg-white">Tambah Rincian Biaya</div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="small text-muted">Jenis Biaya (COA)</label>
+                                        <select id="itemCoa" class="form-select form-select-sm">
+                                            </select>
+                                        <div id="item-budget-info" class="text-end mt-1" style="font-size: 10px;"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="small text-muted">Deskripsi Item</label>
+                                        <input type="text" id="itemDesc" class="form-control form-control-sm" placeholder="Mis: Sewa Bus">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small text-muted">Nominal (Rp)</label>
+                                        <input type="number" id="itemAmount" class="form-control form-control-sm" placeholder="0">
+                                    </div>
+                                </div>
+                                <button type="button" onclick="tambahItemKeTabel()" class="btn btn-secondary btn-sm w-100 mt-2"><i class="fa-solid fa-plus"></i> Tambah ke List</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3 border rounded">
+                            <table class="table table-sm table-striped mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>COA</th>
+                                        <th>Deskripsi</th>
+                                        <th class="text-end">Nominal</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="list-items-body">
+                                    </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="2" class="text-end">TOTAL PENGAJUAN</td>
+                                        <td class="text-end text-primary" id="total-request-display">Rp 0</td>
+                                        <td></td>
+                                    </tr>
+                                tfoot>
+                            </table>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary py-2 fw-bold">KIRIM PENGAJUAN</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalRegister" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Daftar Akun Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formRegister">
+                        <div class="mb-3"><input type="email" id="regEmail" class="form-control" placeholder="Email" required></div>
+                        <div class="mb-3"><input type="password" id="regPass" class="form-control" placeholder="Password" required></div>
+                        <div class="mb-3"><input type="text" id="regName" class="form-control" placeholder="Nama Lengkap" required></div>
+                        <div class="mb-3">
+    <input type="text" id="regPhone" class="form-control" placeholder="No. WA (Wajib 62...)" required>
+    <div class="form-text small text-muted">Format: 628123456789 (Tanpa + atau 0)</div>
+</div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Lokasi Cabang:</label>
+                            <select id="regBranch" class="form-select" required>
+                                <option value="">Memuat daftar cabang...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Jabatan:</label>
+                            <select id="regRole" class="form-select">
+                                <option value="staf">Staf</option>
+                                <option value="manager">Manager</option>
+                                <option value="akunting">Akunting</option>
+                                <option value="pimpinan">Pimpinan</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Divisi:</label>
+                            <select id="regDivision" class="form-select">
+                                <option value="IT">IT & Tech</option>
+                                <option value="HRD">HRD & GA</option>
+                                <option value="MARKETING">Marketing</option>
+                                <option value="SALES">Sales</option>
+                                <option value="FINANCE">Finance</option>
+                                <option value="BOD">Direksi</option>
+                            </select>
+                        </div>
+                        <div class="d-grid"><button type="submit" class="btn btn-success fw-bold">DAFTAR SEKARANG</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalManageUsers" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Kelola Pengguna</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="user-list-container" class="list-group list-group-flush"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalMasterCoa" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Master Chart of Accounts (COA)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item"><button class="nav-link active small fw-bold" data-bs-toggle="tab" data-bs-target="#tabCoaManual">✍️ Manual</button></li>
+                        <li class="nav-item"><button class="nav-link small fw-bold" data-bs-toggle="tab" data-bs-target="#tabCoaImport">📂 Import Excel</button></li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tabCoaManual">
+                            <div class="card bg-light border-0 mb-4">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle"></i> Tambah Akun Baru</h6>
+                                    <form id="formAddCoa" class="row g-2">
+                                        <div class="col-md-2"><input type="text" id="newCoaCode" class="form-control" placeholder="Kode" required></div>
+                                        <div class="col-md-4"><input type="text" id="newCoaName" class="form-control" placeholder="Nama Akun" required></div>
+                                        <div class="col-md-3">
+                                            <select id="newCoaDivision" class="form-select" required>
+                                                <option value="">Divisi...</option>
+                                                <option value="IT">IT</option>
+                                                <option value="HRD">HRD</option>
+                                                <option value="MARKETING">Marketing</option>
+                                                <option value="SALES">Sales</option>
+                                                <option value="FINANCE">Finance</option>
+                                                <option value="BOD">Direksi</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select id="newCoaBranch" class="form-select" required>
+                                                <option value="">Cabang...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12"><button type="submit" class="btn btn-primary w-100 fw-bold">SIMPAN</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Kode</th>
+                                            <th>Nama Akun</th>
+                                            <th>Divisi</th>
+                                            <th>Cabang</th> 
+                                            <th class="text-end">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="list-coa-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="tabCoaImport">
+                            <div class="alert alert-info small p-2">
+                                <strong>Format Excel:</strong><br>Kolom A: KODE<br>Kolom B: NAMA<br>Kolom C: DIVISI<br>Kolom D: CABANG
+                            </div>
+                            <div class="mb-3"><input type="file" id="inputExcelCoa" class="form-control" accept=".xlsx, .xls"></div>
+                            <div class="d-grid"><button onclick="prosesImportMasterCoa()" class="btn btn-primary fw-bold"><i class="fa-solid fa-upload"></i> UPLOAD MASTER DATA</button></div>
+                            <div class="text-center mt-3"><a href="#" onclick="downloadTemplateMaster()" class="small text-decoration-none">⬇️ Download Template</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalBudget" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Seting Anggaran Bulanan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item"><button class="nav-link active small fw-bold" data-bs-toggle="tab" data-bs-target="#tabManual">✍️ Manual</button></li>
+                        <li class="nav-item"><button class="nav-link small fw-bold" data-bs-toggle="tab" data-bs-target="#tabImport">📂 Import Excel</button></li>
+                    </ul>
+                
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tabManual">
+                            <form id="formBudget">
+                                <div class="mb-3"><label class="form-label small fw-bold">Pos Biaya (COA)</label><select id="budgetCoa" class="form-select" required><option value="">Memuat...</option></select></div>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label small fw-bold">Bulan</label>
+                                        <select id="budgetMonth" class="form-select">
+                                            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option>
+                                            <option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option>
+                                            <option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 mb-3"><label class="form-label small fw-bold">Tahun</label><input type="number" id="budgetYear" class="form-control" value="2025"></div>
+                                </div>
+                                <div class="mb-4"><label class="form-label small fw-bold">Batas Anggaran (Rp)</label><input type="number" id="budgetAmount" class="form-control" placeholder="0" required></div>
+                                <div class="d-grid"><button type="submit" class="btn btn-success fw-bold">SIMPAN ANGGARAN</button></div>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="tabImport">
+                            <div class="alert alert-info small p-2">
+                                <strong>Format Baru (Setahun):</strong><br>Kolom A: KODE_COA<br>Kolom B: TAHUN<br>Kolom C-N: JAN, FEB, MAR ... DES
+                            </div>
+                            <div class="mb-3"><input type="file" id="inputExcel" class="form-control" accept=".xlsx, .xls"></div>
+                            <div class="d-grid"><button onclick="prosesImportExcel()" class="btn btn-primary fw-bold"><i class="fa-solid fa-upload"></i> UPLOAD & PROSES</button></div>
+                            <div class="text-center mt-3"><a href="#" onclick="downloadTemplate()" class="small text-decoration-none">⬇️ Download Template Budget Setahun</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalProfile" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-gear"></i> Profil Saya</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="profileTabs">
+                        <li class="nav-item"><button class="nav-link active small fw-bold" data-bs-toggle="tab" data-bs-target="#tabInfo">👤 Data & TTD</button></li>
+                        <li class="nav-item"><button class="nav-link small fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tabSecurity">🔒 Ganti Password</button></li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tabInfo">
+                            <form id="formProfile">
+                                <div class="mb-2"><label class="small text-muted">Nama Lengkap</label><input type="text" id="profName" class="form-control" readonly></div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><label class="small text-muted">Jabatan</label><input type="text" id="profRole" class="form-control" readonly></div>
+                                    <div class="col-6"><label class="small text-muted">Divisi</label><input type="text" id="profDiv" class="form-control" readonly></div>
+                                </div>
+                                <hr>
+                                <label class="small fw-bold mb-2">Tanda Tangan Digital (TTD)</label>
+                                <div class="text-center mb-3 p-2 border rounded bg-light">
+                                    <img id="img-ttd-preview" src="" style="max-height: 80px; display: none;" class="img-fluid">
+                                    <p id="txt-ttd-empty" class="small text-muted fst-italic m-0">Belum ada tanda tangan</p>
+                                </div>
+                                <div class="input-group">
+                                    <input type="file" id="inputFileTTD" class="form-control" accept="image/*">
+                                    <button type="button" onclick="uploadTTD()" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Upload</button>
+                                </div>
+                                <div class="form-text small">Disarankan format PNG background transparan.</div>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="tabSecurity">
+                            <div class="alert alert-warning small py-2"><i class="fa-solid fa-info-circle"></i> Password baru akan berlaku saat login berikutnya.</div>
+                            <form id="formChangePass" onsubmit="handleGantiPassword(event)">
+                                <div class="mb-3"><label class="form-label small fw-bold">Password Baru</label><input type="password" id="newPass" class="form-control" placeholder="Minimal 6 karakter" required minlength="6"></div>
+                                <div class="mb-4"><label class="form-label small fw-bold">Ulangi Password Baru</label><input type="password" id="confirmPass" class="form-control" placeholder="Ketik ulang..." required></div>
+                                <div class="d-grid"><button type="submit" class="btn btn-danger fw-bold">SIMPAN PASSWORD BARU</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalMasterCabang" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Kelola Daftar Cabang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formAddBranch" class="d-flex gap-2 mb-3">
+                        <input type="text" id="newBranchCode" class="form-control" placeholder="Kode (mis: BDG)" style="width: 30%;" required>
+                        <input type="text" id="newBranchName" class="form-control" placeholder="Nama Cabang" required>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
+                    </form>
+                    <ul id="list-branch-body" class="list-group list-group-flush border-top"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCekBudget" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-wallet"></i> Status Anggaran Divisi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small py-2 mb-3">
+                        <i class="fa-solid fa-info-circle"></i> Menampilkan data bulan ini.
+                    </div>
+                    <div id="list-budget-staf" class="d-flex flex-column gap-3">
+                        <div class="text-center"><div class="spinner-border text-primary"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: none;">
+        <div id="pdf-template" style="font-family: 'Helvetica', 'Arial', sans-serif; width: 100%; padding: 40px; color: #333; background: #fff; position: relative;">
+            
+            <div id="pdf-rejected-stamp" style="position: absolute; top: 150px; left: 50%; transform: translate(-50%, 0) rotate(-15deg); border: 4px solid #dc3545; color: #dc3545; font-size: 50px; font-weight: 900; padding: 10px 40px; border-radius: 10px; opacity: 0; z-index: 99; letter-spacing: 5px;">
+                REJECTED
+            </div>
+
+            <div style="border-bottom: 3px solid #0d6efd; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2 style="margin: 0; color: #0d6efd; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">PT. PERUSAHAAN ANDA</h2>
+                    <p style="margin: 5px 0 0; font-size: 12px; color: #666;">Gedung Menara Indah Lt. 12, Jl. Sudirman No. 1, Jakarta<br>Telp: (021) 555-0199 | Email: finance@perusahaan.com</p>
+                </div>
+                <div style="text-align: right;">
+                    <h3 style="margin: 0; font-weight: bold; color: #333;">PAYMENT REQUEST</h3>
+                    <p style="margin: 5px 0 0; font-size: 14px; color: #666;">NO. REF: <span id="pdf-code" style="color: #000; font-weight: bold;">...</span></p>
+                </div>
+            </div>
+
+            <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 50%; vertical-align: top; padding-right: 20px;">
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px; width: 100px;">Tanggal</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-date">...</span></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px;">Pemohon</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-requester-name">...</span></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px;">Divisi</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-division">...</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="width: 50%; vertical-align: top;">
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px; width: 100px;">Judul Kegiatan</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-title">...</span></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px;">Status</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-status" style="background: #eee; padding: 2px 6px; border-radius: 4px;">...</span></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666; padding-bottom: 5px;">Cabang</td>
+                                <td style="font-weight: bold; padding-bottom: 5px;">: <span id="pdf-branch">...</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px;">
+                <thead>
+                    <tr style="background-color: #f1f4f9; color: #333;">
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: left; width: 5%;">No</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: left; width: 25%;">Jenis Biaya (COA)</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: left; width: 45%;">Deskripsi / Keperluan</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: right; width: 25%;">Nominal (IDR)</th>
+                    </tr>
+                </thead>
+                <tbody id="pdf-items-body">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="padding: 15px 10px; text-align: right; font-weight: bold; font-size: 14px; border-top: 2px solid #000;">TOTAL PENGAJUAN</td>
+                        <td id="pdf-grand-total" style="padding: 15px 10px; text-align: right; font-weight: bold; font-size: 16px; color: #0d6efd; border-top: 2px solid #000;">Rp 0</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="margin-top: 40px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
+                <p style="margin: 0 0 15px 0; font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase;">Lembar Persetujuan:</p>
+                <table style="width: 100%; text-align: center;">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%; font-size: 11px; color: #666;">DIAJUKAN OLEH</th>
+                            <th style="width: 25%; font-size: 11px; color: #666;">DIKETAHUI (MGR)</th>
+                            <th style="width: 25%; font-size: 11px; color: #666;">DIVERIFIKASI (ACC)</th>
+                            <th style="width: 25%; font-size: 11px; color: #666;">DISETUJUI (DIR)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="height: 80px; vertical-align: bottom; padding: 10px;">
+                                <img id="sign-req-img" src="" style="max-height: 60px; max-width: 100%; display:none; margin: 0 auto;">
+                                <div id="sign-req-name" style="font-size: 12px; font-weight: bold; margin-top: 5px; border-top: 1px dotted #999; display: inline-block; padding-top: 5px; min-width: 100px;">...</div>
+                            </td>
+                            <td style="height: 80px; vertical-align: bottom; padding: 10px;">
+                                <img id="sign-mgr-img" src="" style="max-height: 60px; max-width: 100%; display:none; margin: 0 auto;">
+                                <div id="sign-mgr-placeholder" style="font-size: 10px; color: #ccc; font-style: italic;">(Menunggu)</div>
+                            </td>
+                            <td style="height: 80px; vertical-align: bottom; padding: 10px;">
+                                <img id="sign-acc-img" src="" style="max-height: 60px; max-width: 100%; display:none; margin: 0 auto;">
+                                <div id="sign-acc-placeholder" style="font-size: 10px; color: #ccc; font-style: italic;">(Menunggu)</div>
+                            </td>
+                            <td style="height: 80px; vertical-align: bottom; padding: 10px;">
+                                <img id="sign-boss-img" src="" style="max-height: 60px; max-width: 100%; display:none; margin: 0 auto;">
+                                <div id="sign-boss-placeholder" style="font-size: 10px; color: #ccc; font-style: italic;">(Menunggu)</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 30px; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between;">
+                <span>System Generated Document. Valid without wet signature.</span>
+                <span>Printed: <span id="pdf-print-date"></span></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
