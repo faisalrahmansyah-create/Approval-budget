@@ -1,0 +1,230 @@
+/* =========================================
+   FILE: css/style.css (V4.0 - DESKTOP READY)
+   ========================================= */
+
+/* 1. VARIABLE & GLOBAL SETTINGS */
+:root {
+    --primary-color: #0d6efd;   /* Biru Utama */
+    --secondary-color: #6c757d; /* Abu-abu */
+    --bg-light: #f4f7f6;        /* Latar Belakang Dashboard */
+    --sidebar-width: 260px;     /* Lebar Sidebar Desktop */
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+/* 2. HALAMAN LOGIN (Fullscreen) */
+#login-page {
+    height: 100vh;
+    width: 100vw;
+    background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+    position: fixed; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999; /* Di atas Dashboard & Sidebar */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 400px;
+}
+
+/* 3. SIDEBAR (Mobile Default: Hidden/Offcanvas) */
+.offcanvas {
+    width: var(--sidebar-width) !important;
+    border-right: 1px solid #eee;
+    background-color: white;
+}
+
+.sidebar-profile {
+    padding: 25px 20px;
+    text-align: center;
+    background-color: white;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-pic {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    background-size: cover;
+    background-position: center;
+    margin: 0 auto;
+    border: 3px solid white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-menu-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #555;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+}
+
+.sidebar-menu-item:hover {
+    background-color: #f1f4f9;
+    color: var(--primary-color);
+}
+
+.sidebar-menu-item.active {
+    background-color: #e7f1ff;
+    color: var(--primary-color);
+    border-left: 4px solid var(--primary-color);
+}
+
+.sidebar-menu-item i { width: 25px; text-align: center; margin-right: 10px; }
+
+/* 4. DASHBOARD & NAVBAR */
+.navbar-custom {
+    background-color: white;
+    padding: 15px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.btn-hamburger {
+    border: none;
+    background: none;
+    font-size: 24px;
+    color: #333;
+    margin-right: 15px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    transition: transform 0.2s;
+}
+.stat-card:hover { transform: translateY(-3px); }
+
+.stat-value { font-size: 1.5rem; font-weight: bold; }
+.stat-label { font-size: 0.75rem; color: #888; }
+
+/* 5. REQUEST CARD (List Data) */
+.request-card {
+    transition: transform 0.2s;
+    border: 1px solid #f0f0f0 !important;
+}
+.request-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+}
+
+/* 6. TOMBOL FAB (Hanya Mobile) */
+.fab-btn {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    width: 60px; height: 60px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+    font-size: 24px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    z-index: 1050;
+}
+.fab-btn:active { transform: scale(0.9); }
+
+/* 7. PDF STYLES */
+.hidden-signature { display: none !important; }
+.rejected-stamp-container { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); border: 5px solid #dc3545; padding: 10px 20px; border-radius: 10px; opacity: 0; pointer-events: none; z-index: 10; }
+.rejected-stamp-container.show { opacity: 0.4; }
+.rejected-stamp-text { color: #dc3545; font-size: 4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; }
+
+/* ========================================================
+   8. FIX HIERARKI TAMPILAN (Z-INDEX)
+   ======================================================== */
+.modal-backdrop { z-index: 10000 !important; }
+.modal { z-index: 10001 !important; }
+.swal2-container { z-index: 20000 !important; }
+.form-select { position: relative; z-index: auto; }
+
+/* ========================================================
+   9. DESKTOP MODE (RESPONSIVE MEDIA QUERY)
+   Ini bagian yang membuat tampilan laptop jadi bagus
+   ======================================================== */
+@media (min-width: 992px) {
+    
+    /* A. Sidebar Selalu Muncul (Split Screen) */
+    .offcanvas-start {
+        transform: none !important;
+        visibility: visible !important;
+        position: fixed;
+        top: 0; bottom: 0; left: 0;
+        z-index: 900; /* Di bawah Modal & Login */
+        box-shadow: 1px 0 10px rgba(0,0,0,0.05);
+    }
+    
+    .offcanvas-backdrop { display: none !important; } /* Hilangkan layar hitam */
+
+    /* B. Konten Utama Geser ke Kanan */
+    .navbar-custom, .container {
+        margin-left: var(--sidebar-width);
+        width: calc(100% - var(--sidebar-width));
+        max-width: none; /* Hapus batasan container bootstrap */
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+    
+    /* C. Sembunyikan Tombol Hamburger */
+    .btn-hamburger { display: none; }
+
+    /* D. Grid Layout untuk Kartu Request (2 Kolom) */
+    #content-area {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 20px;
+    }
+    .request-card { margin-bottom: 0 !important; height: 100%; }
+
+    /* E. Tombol Tambah Pindah ke Atas (Bukan FAB lagi) */
+    .fab-btn {
+        position: static;
+        width: auto; height: auto;
+        border-radius: 30px;
+        padding: 10px 25px;
+        box-shadow: none;
+        font-size: 14px;
+        font-weight: bold;
+        transform: none;
+    }
+    .fab-btn::after { content: " Buat Pengajuan"; margin-left: 8px; }
+    
+    /* Posisikan tombol tambah di header */
+    .navbar-custom .d-flex.align-items-center {
+        width: 100%;
+        justify-content: space-between;
+    }
+    /* Sisipkan tombol FAB ke dalam Navbar lewat JS nanti, atau biarkan melayang tapi di pojok atas */
+    /* Untuk simpelnya: FAB tetap melayang tapi geser sedikit agar tidak menutupi konten */
+    .fab-btn {
+        bottom: 50px; right: 50px;
+    }
+}
